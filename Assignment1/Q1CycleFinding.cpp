@@ -10,7 +10,6 @@
 #include <ctime>
 #include<map>
 #include<list>
-#include <algorithm>
 #include <typeinfo>
 using namespace std;
 
@@ -39,6 +38,7 @@ public:
 	Graph(){
 
 	}
+	// This function add edge to the existing random generated graph
 	void addEdge(T u, T v,bool undirected=true){
 
 		bool edge_exist = false;
@@ -47,7 +47,6 @@ public:
 		{
 			if(neighbour == v)
 			{
-//				cout << "edge (" << u << ", " << v << ") already exist in adjList\n";
 				edge_exist = true;
 			}
 		}
@@ -62,9 +61,9 @@ public:
 		}
 	}
 
+	// This function generate a graph "int userInput" is the vertex number user want to generate.
 	void graphGenerator(int userInput){
-		// add 1 as 0 is counted
-		int GraphVertex = userInput + 1;
+		// Clear all previous structure as test automation will generate multiple graph for testing
 		adjList.clear();
 		Discovered.clear();
 		AdjListInProgress.clear();
@@ -72,42 +71,20 @@ public:
 		Cycle.clear();
 		terminate_dfs = false;
 		GraphEdge = 0;
-//		adjList[NOEdge].push;
-//		for(T neighbour: adjList[node]){
-//							//Two things can happen
-//							//The current node is not visited but its further branch is leading to a cycle
-//							if((!visited[neighbour] && isCyclicHelper(neighbour,visited,inStack))||inStack[neighbour]){
-//								return true;
-//							}
-//
-//					}
+		int GraphVertex = userInput + 1;
 
-		cout << "rand()%GraphVertex: " << rand()%GraphVertex << endl;
 		while (adjList.size() < GraphVertex) {
 			addEdge(rand()%GraphVertex,rand()%GraphVertex);
 			GraphEdge += 1;
 		}
 		cout << "edge number: " << GraphEdge << endl;
-//		addEdge(0,1);
-//		addEdge(0,1);
-//		addEdge(0,1);
-//		addEdge(0,1);
-//		addEdge(1,2);
-//		addEdge(0,4);
-//		addEdge(2,4);
-//		addEdge(2,3);
-//		addEdge(3,4);
-//		addEdge(3,5);
 	}
 
+	// This function print out graph generated from graphGenerator
 	void printAdjacencyList(){
-
 		cout << "printAdjacencyList:" << endl;
-		//Iterate over the map
 		for(auto i:adjList){
 			cout<<i.first<<"->";
-			//i.second is LL
-
 			for(T entry:i.second){
 				cout<<entry<<",";
 			}
@@ -116,40 +93,26 @@ public:
 		cout << endl;
 	}
 
+	// This function capture all the vertices of the cycle being found
 	void GetCycle(T Ancestor, T Descendant){
 		Cycle.push_back(Ancestor);
 		Cycle.push_back(Descendant);
-//		cout << "Descendant: " << Descendant << endl;
-//		cout << "Parent[Descendant]: " << Parent[Descendant] << endl;
-//		cout << "Ancestor: " << Ancestor << endl;
 		while (Parent[Descendant] != Ancestor){
 			Descendant = Parent[Descendant];
 			Cycle.push_back(Descendant);
-//			cout << "Parent[Descendant]: " << Parent[Descendant] << endl;
-//			cout << "Ancestor: " << Ancestor << endl;
 		}
 
 		Cycle.push_back(Parent[Descendant]);
 	}
 
+	// This is the actual function which does the graph traversal
 	void dfsDiscover(T node){
-		//Mark the first seen node as discovered
+		// Mark the first seen node as discovered
 		Discovered[node] = true;
 		AdjListInProgress[node] = true;
-		//Try to find out a node which is neigbour of current node and not yet visited
-//		cout << "current node: " << node << endl;
+		// Try to discover current node's neigbour which have not yet been visited
 		for(T neighbour: adjList[node]){
-//			cout << "Parent[node]: " << Parent[node] << endl;
-//			cout << "neighbour: " << neighbour << endl;
-//			cout << "AdjListInProgress[neighbour]: " << AdjListInProgress[neighbour] << endl;
-//			cout << "Parent[neighbour]: " << Parent[neighbour] << endl;
 			if(AdjListInProgress[neighbour] && Parent[node] != neighbour){
-//				cout << "debug ---- 1" << endl;
-//				cout << "Cycle exist." << endl;
-//				for(auto i:Parent){
-//					cout << "Parent i: "<< i.first <<  "Parent[i]: " << i.second << endl;
-//				}
-
 				terminate_dfs = true;
 				GetCycle(neighbour, node);
 				break;
@@ -165,19 +128,23 @@ public:
 		AdjListInProgress[node] = false;
 	}
 
+	// This function loop through all nodes in given graph,
+	// if the node has not been discovered, the node will be used as starting node for DFS finding cycle.
+	// function DFS will still go through all disjoint sets until it finds a cycle or given graph vertices exhausted.
 	void dfs(){
-
-		//Go through all nodes (vertices ) in graph G
+		//Go through all nodes (vertices) in graph G in case there are disjoint sets in graph G
 		for(auto i:adjList){
 			T node = i.first;
 			if(!Discovered[node]){
 				Parent[node] = NULL;
 				dfsDiscover(node);
 			}
+			// If cycle is found, break the for loop
 			if (terminate_dfs){
 				break;
 			}
 		}
+		//  If cycle exists, show found cycle
 		if (!terminate_dfs){
 			cout << "Cycle doesn't exist." << endl;
 		}
@@ -189,6 +156,10 @@ public:
 			cout << "end" << endl;
 		}
 	}
+
+	// The functions below are all for testing purpose
+
+	// Test a small given graph with cycle so that cycle detection can be varified
 	void cycle_exist_test_code(){
 		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
 		addEdge(0,1);
@@ -205,6 +176,7 @@ public:
 		printAdjacencyList();
 	}
 
+	// Test a small given graph with no cycle so that cycle detection can be varified
 	void cycle_not_exist_test_code(){
 		// Given a graph with no cycle and see if algorithm can tell there is no cycle exists
 		addEdge(0,1);
@@ -220,7 +192,8 @@ public:
 		printAdjacencyList();
 	}
 
-	void disconnected_graph_test_code(){
+	// Test a small given graph (disconnected) with cycle so that cycle detection can be varified
+	void disconnected_graph_with_a_cycle_test_code(){
 		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
 		addEdge(0,1);
 		addEdge(0,2);
@@ -236,57 +209,38 @@ public:
 		printAdjacencyList();
 	}
 
-	int graph_with_100_vertices_test_code(){
-		graphGenerator(100);
-//		printAdjacencyList();
-		// time dfs
-		auto nanoseconds_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-		auto sec_since_epoch = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
-		auto millisec_before = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-		auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+	// Test a small given graph (disconnected) with no cycle so that cycle detection can be varified
+	void disconnected_graph_with_no_cycle_test_code(){
+		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
+		addEdge(0,1);
+		addEdge(0,2);
+		addEdge(2,3);
+		addEdge(2,6);
+		addEdge(3,3); // node 3 has no edge
+		addEdge(6,4);
+		addEdge(6,5);
+		addEdge(1,7);
+		addEdge(1,8);
+		addEdge(8,9);
 		dfs();
-		auto millisec_after = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-		auto sec_since_epoch_after = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
-		auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+		printAdjacencyList();
+	}
 
-		cout << "dfs run time in nanoseconds: " << nanoseconds_after - nanoseconds_before << endl;
-//		printAdjacencyList();
-		return nanoseconds_after - nanoseconds_before;
-	}
-	int graph_with_1000_vertices_test_code(){
-		graphGenerator(1000);
-//		printAdjacencyList();
-//		cout << "edge number: " << GraphEdge << endl;
-		// time dfs
+	// This function test a customized graph created according to user input.
+	// "int vertices_number" is the number of vertices of the graph being created
+	// DFS will be run against the customized input graph
+	int graph_with_custom_vertices_test_code(int vertices_number){
+		graphGenerator(vertices_number);
 		auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
 		dfs();
 		auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
 		cout << "dfs run time in nanoseconds: " << nanoseconds_after - nanoseconds_before << endl;
-//		printAdjacencyList();
 		return nanoseconds_after - nanoseconds_before;
 	}
-	int graph_with_10000_vertices_test_code(){
-			graphGenerator(10000);
-//			printAdjacencyList();
-			// time dfs
-			auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-			dfs();
-			auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-			cout << "dfs run time in nanoseconds: " << nanoseconds_after - nanoseconds_before << endl;
-	//		printAdjacencyList();
-			return nanoseconds_after - nanoseconds_before;
-		}
-	int graph_with_custom_vertices_test_code(int vertices_number){
-				graphGenerator(vertices_number);
-	//			printAdjacencyList();
-				// time dfs
-				auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-				dfs();
-				auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-				cout << "dfs run time in nanoseconds: " << nanoseconds_after - nanoseconds_before << endl;
-		//		printAdjacencyList();
-				return nanoseconds_after - nanoseconds_before;
-			}
+
+	// This function test a customized graph created according to user input.
+	// it will test it 1000 times and take the average for plotting (time complexity analysis)
+	// MSTAlgorithm will be run against the customized input graph
 	void test_1000_times_take_avg_running_time(int graph_vertices_number){
 		int totalRunningTime = 0;
 		int totalGraphEdge = 0;
@@ -294,18 +248,14 @@ public:
 			totalRunningTime += graph_with_custom_vertices_test_code(graph_vertices_number);
 			totalGraphEdge += GraphEdge;
 		}
-//		totalRunningTime += graph_with_1000_vertices_test_code();
-//		totalRunningTime += graph_with_1000_vertices_test_code();
-//		totalRunningTime += g.graph_with_10000_vertices_test_code();
-//		totalRunningTime += g.graph_with_10000_vertices_test_code();
-	//	cout << "running time: " << g.graph_with_10000_vertices_test_code() << endl;
 		cout << "total running time: " << totalRunningTime << endl;
 		cout << "average running time: " << totalRunningTime/100 << endl;
-		cout << "vertices: 1000" << endl;
+		cout << "vertices: " << graph_vertices_number << endl;
 		cout << "average edges: " << totalGraphEdge/100 << endl;
-
 	}
-	void increasing_graph_size_test_code(){
+
+	// This function test how the running time grows when graph size increase
+	void increasing_graph_size_test_code(int graph_vertices_number){
 		// Graph with 500 vertices
 //		test_1000_times_take_avg_running_time(500);
 		// Graph with 1500 vertices
@@ -323,20 +273,31 @@ public:
 		// Graph with 7500 vertices
 //		test_1000_times_take_avg_running_time(7500);
 		// Graph with 9000 vertices
-		test_1000_times_take_avg_running_time(9000);
+//		test_1000_times_take_avg_running_time(9000);
+		// Graph with customized vertices
+		test_1000_times_take_avg_running_time(graph_vertices_number);
 	}
 };
 
 //int main(){
 //
 //	Graph<int> g;
-////	g.dfs(0);
-////	int n;
-////	n= 7 + rand()%6;
-////	g.graphGenerator(9);
-////	g.test_code1();
 //	srand((unsigned int)time(NULL));
-////	g.increasing_graph_size_test_code();
-//	g.disconnected_graph_test_code();
+//	// uncomment lines 273-275 to to generate a random undirected graph.
+//	// 100000 is the number of vertices of the graph. It can be changed to any integer.
+//	// algorithm will find if a cycle exist. It will print the graph at the end
+//	g.graphGenerator(1000);
+//	g.dfs();
+//	g.printAdjacencyList();
+//	// uncomment next line to test if algorithm may find the cycle in the given connected graph with cycle
+////	g.cycle_exist_test_code();
+//	// uncomment next line to test if algorithm may figure out there is no cycle in the given connected graph
+////	g.cycle_not_exist_test_code();
+//	// uncomment next line to test if algorithm may find the cycle in the given disconnected graph with cycle
+////	g.disconnected_graph_with_a_cycle_test_code();
+//	// uncomment next line to test if algorithm may figure out there is no the cycle in the given disconnected graph
+////	g.disconnected_graph_with_no_cycle_test_code();
+//	// uncomment next line to test a random generated graph 1000 times to get average running time of dfs. 100 is the number of vertices
+////	g.increasing_graph_size_test_code(1000);
 //	return 0;
 //}
