@@ -32,7 +32,7 @@ class Graph{
 	map<T,T> Parent;
 	list<T> Cycle;
 	bool terminate_dfs = false;
-	int GraphEdge;
+	int GraphEdge = 0;
 
 public:
 	Graph(){
@@ -58,11 +58,12 @@ public:
 			if(undirected){
 				adjList[v].push_back(u);
 			}
+			GraphEdge += 1;
 		}
 	}
 
 	// This function generate a graph "int userInput" is the vertex number user want to generate.
-	void graphGenerator(int userInput){
+	void graphGenerator(int userInput, bool testing=false, bool connected=false, bool atLeastOneCycle=false){
 		// Clear all previous structure as test automation will generate multiple graph for testing
 		adjList.clear();
 		Discovered.clear();
@@ -71,18 +72,70 @@ public:
 		Cycle.clear();
 		terminate_dfs = false;
 		GraphEdge = 0;
-		int GraphVertex = userInput + 1;
+		int GraphVertex = userInput;
+		int GraphVertexLimit;
 
-		while (adjList.size() < GraphVertex) {
-			addEdge(rand()%GraphVertex,rand()%GraphVertex);
-			GraphEdge += 1;
+		cout << "Generating random graph... " << endl;
+		if (testing){
+			if (connected){
+				for (int createEdge=0; createEdge<GraphVertex-1; createEdge++){
+					addEdge(createEdge,createEdge+1);
+				}
+				if (atLeastOneCycle){
+					addEdge(0,adjList.size());
+					if (GraphVertex < 20){
+						GraphVertexLimit = GraphVertex;
+					}
+					else{
+						GraphVertexLimit = GraphVertex + rand()%20;
+					}
+					while (GraphEdge < GraphVertexLimit) {
+						int nodeToAddEdge;
+						nodeToAddEdge = rand()%GraphVertex;
+						if ( adjList.find(nodeToAddEdge) != adjList.end() ) {
+							addEdge(nodeToAddEdge,rand()%GraphVertex);
+						}
+					}
+				}
+			}
+			else{
+
+				// Disconnect vertex 0 from the rest of the vertices
+				addEdge(0,0);
+				for (int createEdge=1; createEdge<GraphVertex-2; createEdge++){
+					addEdge(createEdge,createEdge+1);
+				}
+				if (atLeastOneCycle){
+					addEdge(1,adjList.size());
+					if (GraphVertex < 20){
+						GraphVertexLimit = GraphVertex;
+					}
+					else{
+						GraphVertexLimit = GraphVertex + rand()%20;
+					}
+					while (GraphEdge < GraphVertexLimit) {
+						int nodeToAddEdge;
+						nodeToAddEdge = rand()%GraphVertex+1;
+						if ( adjList.find(nodeToAddEdge) != adjList.end() ) {
+							addEdge(nodeToAddEdge,rand()%GraphVertex+1);
+						}
+					}
+				}
+			}
 		}
-		cout << "edge number: " << GraphEdge << endl;
+		else{
+			while (adjList.size() < GraphVertex) {
+				addEdge(rand()%GraphVertex,rand()%GraphVertex);
+			}
+		}
+		cout << "Graph has been generated. " << endl;
+		cout << "Vertex number: " << GraphVertex << endl;
+		cout << "Edge number: " << GraphEdge << endl;
 	}
 
 	// This function print out graph generated from graphGenerator
 	void printAdjacencyList(){
-		cout << "printAdjacencyList:" << endl;
+		cout << "printOriginalGraph:" << endl;
 		for(auto i:adjList){
 			cout<<i.first<<"->";
 			for(T entry:i.second){
@@ -91,6 +144,7 @@ public:
 			cout << endl;
 		}
 		cout << endl;
+		cout << "The graph printed above is the original given graph." << endl;
 	}
 
 	// This function capture all the vertices of the cycle being found
@@ -149,7 +203,8 @@ public:
 			cout << "Cycle doesn't exist." << endl;
 		}
 		else{
-			cout << "Cycle: " << endl;
+			cout << "Cycle exists." << endl;
+			cout << "Printing out cycle: " << endl;
 			for(auto i:Cycle){
 				cout << i << "-";
 			}
@@ -157,71 +212,60 @@ public:
 		}
 	}
 
+	void printMenu(){
+		cout << "For running DFS enter argument '1'" << endl;
+		cout << "For testing DFS given a connected graph with a cycle enter argument '2'" << endl;
+		cout << "For testing DFS given a connected graph without a cycle enter argument '3'" << endl;
+		cout << "For testing DFS given a disconnected graph with a cycle enter argument '4'" << endl;
+		cout << "For testing DFS given a disconnected graph without a cycle enter argument '5'" << endl;
+	}
+
 	// The functions below are all for testing purpose
 
-	// Test a small given graph with cycle so that cycle detection can be varified
-	void cycle_exist_test_code(){
-		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
-		addEdge(0,1);
-		addEdge(0,2);
-		addEdge(2,3);
-		addEdge(2,6);
-		addEdge(6,4);
-		addEdge(6,5);
-		addEdge(1,7);
-		addEdge(1,8); // Cycle edge
-		addEdge(8,9); // Cycle edge
-		addEdge(7,8); // Cycle edge
+	// This function test if algorithm can detect a cycle given a connected graph with cycle(s).
+	void cycle_exist_test_code(int userInput){
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool testing=false" if program in test mode (default is not in test mode)
+		// third argument "bool connected=false" if the given graph is connected (default is not connected)
+		// fourth argument "bool atLeastOneCycle=false" if the given graph has at least one cycle (default graph doesn't have to have cycle)
+		graphGenerator(userInput,true,true,true);
 		dfs();
 		printAdjacencyList();
 	}
 
-	// Test a small given graph with no cycle so that cycle detection can be varified
-	void cycle_not_exist_test_code(){
-		// Given a graph with no cycle and see if algorithm can tell there is no cycle exists
-		addEdge(0,1);
-		addEdge(0,2);
-		addEdge(2,3);
-		addEdge(2,6);
-		addEdge(6,4);
-		addEdge(6,5);
-		addEdge(1,7);
-		addEdge(1,8);
-		addEdge(8,9);
+	// This function test if algorithm can tell there is no cycle exists given a connected graph with no cycle.
+	void cycle_not_exist_test_code(int userInput){
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool testing=false" if program in test mode (default is not in test mode)
+		// third argument "bool connected=false" if the given graph is connected (default is not connected)
+		// fourth argument "bool atLeastOneCycle=false" if the given graph has at least one cycle (default graph doesn't have to have cycle)
+		graphGenerator(userInput,true,true,false);
 		dfs();
 		printAdjacencyList();
 	}
 
-	// Test a small given graph (disconnected) with cycle so that cycle detection can be varified
-	void disconnected_graph_with_a_cycle_test_code(){
-		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
-		addEdge(0,1);
-		addEdge(0,2);
-		addEdge(3,3); // node 3 has no edge
-		addEdge(2,6);
-		addEdge(6,4);
-		addEdge(6,5);
-		addEdge(1,7);
-		addEdge(1,8); // Cycle edge
-		addEdge(8,9); // Cycle edge
-		addEdge(7,8); // Cycle edge
+	// This function test if algorithm can detect a cycle given a disconnected graph with cycle(s).
+	void disconnected_graph_with_a_cycle_test_code(int userInput){
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool testing=false" if program in test mode (default is not in test mode)
+		// third argument "bool connected=false" if the given graph is connected (default is not connected)
+		// fourth argument "bool atLeastOneCycle=false" if the given graph has at least one cycle (default graph doesn't have to have cycle)
+		graphGenerator(userInput,true,false,true);
 		dfs();
 		printAdjacencyList();
 	}
 
-	// Test a small given graph (disconnected) with no cycle so that cycle detection can be varified
-	void disconnected_graph_with_no_cycle_test_code(){
-		// Given a graph with 1 cycle and see if algorithm can detect the existing cycle: 1-7-8-1-end
-		addEdge(0,1);
-		addEdge(0,2);
-		addEdge(2,3);
-		addEdge(2,6);
-		addEdge(3,3); // node 3 has no edge
-		addEdge(6,4);
-		addEdge(6,5);
-		addEdge(1,7);
-		addEdge(1,8);
-		addEdge(8,9);
+	// This function test if algorithm can tell there is no cycle exists given a disconnected graph with no cycle.
+	void disconnected_graph_with_no_cycle_test_code(int userInput){
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool testing=false" if program in test mode (default is not in test mode)
+		// third argument "bool connected=false" if the given graph is connected (default is not connected)
+		// fourth argument "bool atLeastOneCycle=false" if the given graph has at least one cycle (default graph doesn't have to have cycle)
+		graphGenerator(userInput,true,false,false);
 		dfs();
 		printAdjacencyList();
 	}
@@ -231,11 +275,13 @@ public:
 	// DFS will be run against the customized input graph
 	int graph_with_custom_vertices_test_code(int vertices_number){
 		graphGenerator(vertices_number);
-		auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+//		auto nanoseconds_before = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+		auto millisec_before = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 		dfs();
-		auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-		cout << "dfs run time in nanoseconds: " << nanoseconds_after - nanoseconds_before << endl;
-		return nanoseconds_after - nanoseconds_before;
+//		auto nanoseconds_after = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+		auto millisec_after = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		cout << "dfs run time in millisecond: " << millisec_after - millisec_before << endl;
+		return millisec_after - millisec_before;
 	}
 
 	// This function test a customized graph created according to user input.
@@ -249,7 +295,7 @@ public:
 			totalGraphEdge += GraphEdge;
 		}
 		cout << "total running time: " << totalRunningTime << endl;
-		cout << "average running time: " << totalRunningTime/100 << endl;
+		cout << "average running time: " << totalRunningTime/1000 << endl;
 		cout << "vertices: " << graph_vertices_number << endl;
 		cout << "average edges: " << totalGraphEdge/100 << endl;
 	}
@@ -279,25 +325,61 @@ public:
 	}
 };
 
-//int main(){
-//
-//	Graph<int> g;
-//	srand((unsigned int)time(NULL));
-//	// uncomment lines 273-275 to to generate a random undirected graph.
-//	// 100000 is the number of vertices of the graph. It can be changed to any integer.
-//	// algorithm will find if a cycle exist. It will print the graph at the end
-//	g.graphGenerator(1000);
-//	g.dfs();
-//	g.printAdjacencyList();
-//	// uncomment next line to test if algorithm may find the cycle in the given connected graph with cycle
-////	g.cycle_exist_test_code();
-//	// uncomment next line to test if algorithm may figure out there is no cycle in the given connected graph
-////	g.cycle_not_exist_test_code();
-//	// uncomment next line to test if algorithm may find the cycle in the given disconnected graph with cycle
-////	g.disconnected_graph_with_a_cycle_test_code();
-//	// uncomment next line to test if algorithm may figure out there is no the cycle in the given disconnected graph
-////	g.disconnected_graph_with_no_cycle_test_code();
-//	// uncomment next line to test a random generated graph 1000 times to get average running time of dfs. 100 is the number of vertices
-////	g.increasing_graph_size_test_code(1000);
-//	return 0;
-//}
+int main(int argc, char* argv[]){
+	char *userMenuInput = argv[1];
+	Graph<int> g;
+	srand((unsigned int)time(NULL));
+
+	if (argc == 1){
+		g.printMenu();
+	}
+	else if (*userMenuInput == '1'){
+		int userInput;
+		cout << "You will be running the DFS algorithm to find if a cycle exist in a random generated graph." << endl;
+		cout << "How many vertices do you want the input graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.graphGenerator(userInput);
+		g.dfs();
+		g.printAdjacencyList();
+
+	}
+	else if (*userMenuInput == '2'){
+		int userInput;
+		cout << "You will be testing the DFS algorithm with a connected graph which has at least 1 cycle." << endl;
+		cout << "How many vertices do you want the connected graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.cycle_exist_test_code(userInput);
+	}
+	else if (*userMenuInput == '3'){
+		int userInput;
+		cout << "You will be testing the DFS algorithm with a connected graph which has no cycle." << endl;
+		cout << "How many vertices do you want the connected graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.cycle_not_exist_test_code(userInput);
+	}
+	else if (*userMenuInput == '4'){
+		int userInput;
+		cout << "You will be testing the DFS algorithm with a disconnected graph which at least 1 cycle." << endl;
+		cout << "How many vertices do you want the disconnected graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.disconnected_graph_with_a_cycle_test_code(userInput);
+	}
+	else if (*userMenuInput == '5'){
+		int userInput;
+		cout << "You will be testing the DFS algorithm with a disconnected graph which has no cycle." << endl;
+		cout << "How many vertices do you want the disconnected graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.disconnected_graph_with_no_cycle_test_code(userInput);
+	}
+	else{
+		g.printMenu();
+	}
+	// uncomment next line to test a random generated graph 1000 times to get average running time of dfs. 100 is the number of vertices
+//	g.increasing_graph_size_test_code(1000);
+	return 0;
+}

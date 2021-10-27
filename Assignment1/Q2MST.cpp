@@ -123,7 +123,6 @@ public:
 		int node2;
 		int previousNode = -1;
 
-		cout << "MSTEdgeCount------0.1: " << MSTEdgeCount << endl;
 		if (connected){
 			for (int createEdge=0; createEdge<GraphVertex-1; createEdge++){
 				addEdge(createEdge,{createEdge+1, rand()%50});
@@ -131,7 +130,6 @@ public:
 			while (GraphEdge < GraphVertex + 8) {
 				int nodeToAddEdge;
 				nodeToAddEdge = rand()%GraphVertex;
-				cout << "nodeToAddEdge: " << nodeToAddEdge << endl;
 				for(auto i:adjList){
 					for(std::pair<T,int> entry:i.second){
 						int EdgeCost = entry.second;
@@ -150,7 +148,6 @@ public:
 				addEdge(rand()%GraphVertex,{rand()%GraphVertex, rand()%50});
 			}
 		}
-		cout << "MSTEdgeCount------0.1: " << MSTEdgeCount << endl;
 
 		cout << "vertices number: " << GraphVertex << endl;
 		cout << "edge number: " << GraphEdge << endl;
@@ -167,6 +164,7 @@ public:
 			cout << endl;
 		}
 		cout << endl;
+		cout << "The graph printed above is the original given graph." << endl;
 	}
 
 	// This function print out the minimum spanning tree
@@ -177,17 +175,19 @@ public:
 			MSTVertexCount += 1;
 			for(std::pair<T,int> entry:i.second){
 				cout << "(" << entry.first << "," << entry.second << ")" <<",";
-//				MSTEdgeCount += 1;
 			}
 			cout << endl;
 		}
 		cout << endl;
+		cout << "The graph printed above is the final MST." << endl;
 	}
 
 	void checkIfMSTExist(){
-		cout << "MSTEdgeCount/2: " << MSTEdgeCount/2 << endl;
 		cout <<  "MSTVertexCount - 1: " << MSTVertexCount - 1 << endl;
-		cout <<  "GraphVertex - 1: " << GraphVertex - 1 << endl;
+		cout <<  "MSTVertex: " << MSTVertexCount << endl;
+		cout <<  "MSTEdge: " << MSTEdgeCount << endl;
+		cout <<  "OriginalGraphVertex - 1: " << GraphVertex - 1 << endl;
+		cout <<  "OriginalGraphVertex: " << GraphVertex << endl;
 		cout <<  "GraphEdge: " << GraphEdge << endl;
 		if (MSTEdgeCount == GraphVertex - 1){
 			cout << "MST exists, input graph is connected" << endl;
@@ -258,7 +258,6 @@ public:
 			for(std::pair<T,int> entry:i.second){
 				int EdgeCost = entry.second;
 				if ( SortedEdges.find({entry.first,i.first}) == SortedEdges.end() ) {
-//					cout << "i.first: " << i.first << "entry.first" << entry.first << endl;
 					SortedEdges[{i.first, entry.first}] = EdgeCost;
 				}
 			}
@@ -337,28 +336,19 @@ public:
 	// If the edge forms a cycle with the spanning tree, discard the edge, otherwise include the edge.
 	// Algorithm stops when all edges exhaust.
 	void MSTAlgorithm(){
-//		cout << "GraphEdge------1.1: " << GraphEdge << endl;
 		getEdgesToSort();
-//		cout << "GraphEdge------1.2: " << GraphEdge << endl;
 		std::map<std::pair<int, int>, int>::iterator MapIterator2;
 		std::pair<std::pair<int,int>, int> SortedEdges2[SortedEdges.size()];
 
 		// Sort all the edges in ascending order with respect to their weight.
 		int arrayIndex = 0;
 		for (MapIterator2 = SortedEdges.begin(); MapIterator2 != SortedEdges.end(); MapIterator2++){
-//			cout << "arrayIndex: " << arrayIndex << endl;
-//			cout << "MapIterator2->first.first: " << MapIterator2->first.first << endl;
-//			cout << "MapIterator2->first.second: " << MapIterator2->first.second << endl;
-//			cout << "MapIterator2->second: " << MapIterator2->second << endl;
 			SortedEdges2[arrayIndex] = {MapIterator2->first, MapIterator2->second};
 			arrayIndex += 1;
 		}
 		auto edge_size = sizeof(SortedEdges2) / sizeof(SortedEdges2[0]);
 	    mergeSortEdges(SortedEdges2, 0, edge_size - 1);
-//		cout << "GraphEdge------1.3: " << GraphEdge << endl;
-//		int removeCount = 0;
 
-//	    cout << "SortedEdges.size(): " << SortedEdges.size() << endl;
 		// Iterate through all edges starting from the smallest edge adding the edge to a spanning tree set (MST).
 	    for (int i = 0; i < edge_size; i++){
 	    	addEdge(SortedEdges2[i].first.first, {SortedEdges2[i].first.second, SortedEdges2[i].second}, true, true);
@@ -369,20 +359,19 @@ public:
 	    	// If the edge forms a cycle with the spanning tree, discard the edge, otherwise include the edge.
 	    	if (terminate_dfs){
 	    		removeMSTEdge(SortedEdges2[i].first.first, SortedEdges2[i].first.second);
-//	    		removeCount += 1;
-//	    		cout << "Cycle: " << endl;
-//				for (MapIterator2 = Cycle.begin(); MapIterator2 != Cycle.end(); MapIterator2++){
-//					std::pair<T, T> edge = MapIterator2->first;
-//					cout << "(" << edge.first << "," << edge.second << ")-";
-//				}
-//	    		cout << "removed: (" << SortedEdges2[i].first.first << "," << SortedEdges2[i].first.second << ")";
 			}
 		}
-//		cout << "GraphEdge------1.4: " << GraphEdge << endl;
-//		cout << "removeCount------1.5: " << removeCount << endl;
 	}
 
+	// This function is created for user to run everything all in once.
+	// It generates random graph and then run MSTAlgorithm.
+	// It will print out result and running time at the end.
 	void findMST(int graphVertexNum, bool connected=true){
+		// Generate random graph 50 percent change getting connected graph.
+		int ranNum = rand()%50;
+		if (ranNum % 2 == 0){
+			connected=false;
+		}
 		graphGenerator(graphVertexNum, connected);
 		auto millisec_before = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 		MSTAlgorithm();
@@ -393,50 +382,43 @@ public:
 		cout << "MST running time: " << millisec_after - millisec_before << " milliseconds";
 	}
 
-	// Test a given connected graph which was generated by the graphGenerator
-	void connected_graph_test_code(int graphVertexNum){
-		// Given a not connected graph and see if algorithm can return the minimum spanning tree
-		bool connected = true;
-		graphGenerator(graphVertexNum, connected);
-		cout << "MSTEdgeCount------1: " << MSTEdgeCount << endl;
-		MSTAlgorithm();
-		cout << "MSTEdgeCount------2: " << MSTEdgeCount << endl;
-//		printAdjacencyList();
-//		printMST();
-		checkIfMSTExist();
-		cout << "MSTEdgeCount------3: " << MSTEdgeCount << endl;
+	// This function print out menu for user
+	void printMenu(){
+		cout << "For running MST algorithm enter argument '1'" << endl;
+		cout << "For testing MST algorithm given a connected graph enter argument '2'" << endl;
+		cout << "For testing MST algorithm given a disconnected graph enter argument '3'" << endl;
 	}
 
-	// Test a small given graph with no cycle so that cycle detection can be varified
+	// This function test if the algorithm can return the minimum spanning tree for given connected graph
+	void connected_graph_test_code(int graphVertexNum){
+		bool connected = true;
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool connected=false" controls if the given graph has to be connected (by default given graph doesn't have to be connected)
+		graphGenerator(graphVertexNum, connected);
+		MSTAlgorithm();
+		printAdjacencyList();
+		printMST();
+		checkIfMSTExist();
+	}
+
+	// This function test if the algorithm can detect MST doesn't exist for given disconnected graph
 	void disconnected_graph_test_code(int graphVertexNum){
-		// Given a not connected graph with 0 cycle and see if algorithm can detect MST doesn't exist
-		graphGenerator(graphVertexNum,true);
-		for (auto item :SortedEdges){
-			cout << "(" << item.first.first << "," << item.first.second << ")";
-		}
+		// graphGenerator arguments:
+		// first argument "int userInput" control how many vertices the given graph has
+		// second argument "bool connected=false" controls if the given graph has to be connected (by default given graph doesn't have to be connected)
+		graphGenerator(graphVertexNum);
 		// remove all edges of the first node to make sure the graph is disconnected
 		int count = 0;
 		list<std::pair<T,int>> nodeToRemove;
-//		printAdjacencyList();
 		for (std::pair<T,int> zeroNeighbour :adjList[0]){
-//			for(std::pair<T,int> neighbour: adjList[zeroNeighbour.first]){
-//				cout << "neighbour.first: " << neighbour.first << endl;
-//				if (0 == neighbour.first){
-//					adjList[zeroNeighbour.first].remove(neighbour);
-//					break;
-//				}
-//				count += 1;
-//			}
-//			cout << "zeroNeighbour: " << zeroNeighbour.first << endl;
 			nodeToRemove.push_back(zeroNeighbour);
-//			adjList[0].remove(zeroNeighbour);
 		}
+		// make sure those edges also being removed from SortedEdges for merge sort
 		std::map<std::pair<int,int>, int>::iterator it;
 		for (std::pair<T,int> zeroNeighbour :nodeToRemove){
-			cout << "zeroNeighbour: (" << zeroNeighbour.first << "," << zeroNeighbour.second << ")" << endl;
 			adjList[0].remove(zeroNeighbour);
 			for(std::pair<T,int> neighbour: adjList[zeroNeighbour.first]){
-				cout << "neighbour.first: " << neighbour.first << endl;
 				if (0 == neighbour.first){
 					adjList[zeroNeighbour.first].remove(neighbour);
 					SortedEdges.erase({zeroNeighbour.first,0});
@@ -445,11 +427,8 @@ public:
 				}
 			}
 		}
-		for (auto item :SortedEdges){
-			cout << "(" << item.first.first << "," << item.first.second << ")";
-		}
 		MSTAlgorithm();
-//		printAdjacencyList();
+		printAdjacencyList();
 		printMST();
 		checkIfMSTExist();
 	}
@@ -494,7 +473,8 @@ public:
 
 	}
 
-	// This function test how the running time grows when graph size increase
+	// This function is for time complexity analysis.
+	// It shows how the running time grows when graph size increase
 	void increasing_graph_size_test_code(int graph_vertices_number){
 		// Graph with 500 vertices
 //		test_10_times_take_avg_running_time(500);
@@ -510,17 +490,41 @@ public:
 	}
 };
 
-int main(){
+int main(int argc, char* argv[]){
+	char *userMenuInput = argv[1];
 	Graph<int, std::pair<int,int>> g;
 	srand((unsigned int)time(NULL));
-	// uncomment line  to to generate a random undirected graph.
-	// 100 is the vertices number of the graph. It can be changed to any integer.
-	// algorithm will find the MTS for the graph if exist. It will print the MST at the end
-	g.findMST(100);
-	// uncomment next line to test if algorithm may return MST for the given connected graph. The number 1000 is the number of vertices of the graph.
-//	g.connected_graph_test_code(1000);
-	// uncomment next line to test if algorithm may return MST for the given disconnected graph. The number 1000 is the number of vertices of the graph.
-//	g.disconnected_graph_test_code(1000);
+
+	if (argc == 1){
+		g.printMenu();
+	}
+	else if (*userMenuInput == '1'){
+		int userInput;
+		cout << "You will be running the MST algorithm." << endl;
+		cout << "How many vertices do you want the input graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.findMST(userInput);
+	}
+	else if (*userMenuInput == '2'){
+		int userInput;
+		cout << "You will be testing the MST algorithm with a given connected graph." << endl;
+		cout << "How many vertices do you want the input graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.connected_graph_test_code(userInput);
+	}
+	else if (*userMenuInput == '3'){
+		int userInput;
+		cout << "You will be testing the MST algorithm with a given disconnected graph." << endl;
+		cout << "How many vertices do you want the input graph to have?" << endl;
+		cout << "Please enter an integer..." << endl;
+		cin >> userInput;
+		g.disconnected_graph_test_code(userInput);
+	}
+	else{
+		g.printMenu();
+	}
 	// uncomment next line to test a random generated graph 1000 times to get average running time of dfs. 100 is the number of vertices
 //	g.increasing_graph_size_test_code(4000);
 	return 0;
